@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+
+
+  web:
+    build: .
+    ports:
+      - 8000:8000
+    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - .:/code
+    depends_on:
+      - broker
+    links:
+      - broker
+
+  worker:
+    build: .
+    command: celery -A celery_tasks.celery worker --loglevel=DEBUG
+    volumes:
+      - .:/code
+    depends_on:
+      - web
+      - broker
+
+  broker:
+    hostname: rabbit
+    image: rabbitmq:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+    ports:
+      - "5566:5672"
+      #local port 5672 was in use
+
+
+
